@@ -1,21 +1,15 @@
-//functions/src/index.ts
+// functions/src/index.ts
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-// Initialize Firebase Admin SDK once
 admin.initializeApp();
 
-/**
- * HTTPS Callable Function:
- * Delete a user from Firebase Authentication
- */
-export const deleteUser = functions.https.onRequest(async (req, res) => {
+export const deleteUser = functions.https.onRequest(async (req, res): Promise<void> => {
   try {
     const { uid } = req.body;
-
     if (!uid) {
-      res.status(400).send("❌ Missing uid");
-      return;
+      res.status(400).send({ error: "Missing uid" });
+      return; // 👈 void を返す
     }
 
     await admin.auth().deleteUser(uid);
