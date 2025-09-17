@@ -6,8 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import TasksPage from "./pages/TasksPage";
 import SettingsPage from "./pages/SettingsPage";
 import ReportsPage from "./pages/ReportsPage";
-import UsersPage from "./pages/UsersPage"; // ✅ import
+import UsersPage from "./pages/UsersPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout"; 
 
 export default function App() {
   return (
@@ -17,49 +18,29 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
-        {/* Protected */}
+        {/* Protected with Layout */}
         <Route
           path="/"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout /> 
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/tasks"
-          element={
-            <ProtectedRoute>
-              <TasksPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute>
-              <ReportsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* ✅ Only HQ role can access */}
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute allowedRoles={["honbu"]}>
-              <UsersPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          {/* index = "/" */}
+          <Route index element={<Dashboard />} />
+          <Route path="tasks" element={<TasksPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={["honbu"]}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

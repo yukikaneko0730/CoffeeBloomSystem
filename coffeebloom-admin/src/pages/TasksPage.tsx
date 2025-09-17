@@ -13,12 +13,12 @@ import {
 
 // Store → color mapping
 const STORE_COLORS: Record<string, string> = {
-  "All Stores": "bg-gray-100 border-gray-400",
-  "Berlin Mitte": "bg-blue-100 border-blue-400",
-  "Berlin Kreuzberg": "bg-green-100 border-green-400",
-  "Berlin Neukölln": "bg-yellow-100 border-yellow-400",
-  "Berlin Charlottenburg": "bg-purple-100 border-purple-400",
-  "Berlin Prenzlauer Berg": "bg-pink-100 border-pink-400",
+  "All Stores": "bg-gray-100 border-gray-300",
+  "Berlin Mitte": "bg-blue-50 border-blue-300",
+  "Berlin Kreuzberg": "bg-green-50 border-green-300",
+  "Berlin Neukölln": "bg-yellow-50 border-yellow-300",
+  "Berlin Charlottenburg": "bg-purple-50 border-purple-300",
+  "Berlin Prenzlauer Berg": "bg-pink-50 border-pink-300",
 };
 
 export default function TasksPage() {
@@ -32,8 +32,8 @@ export default function TasksPage() {
     return () => unsub();
   }, []);
 
-  // ✅ Group tasks by column
-  const columns = {
+  // ✅ Group tasks by column (型を明示する)
+  const columns: Record<"todo" | "doing" | "done", Task[]> = {
     todo: tasks.filter((t) => t.column === "todo"),
     doing: tasks.filter((t) => t.column === "doing"),
     done: tasks.filter((t) => t.column === "done"),
@@ -61,6 +61,7 @@ export default function TasksPage() {
 
   return (
     <>
+      <h1 className="text-2xl font-bold mb-6">✅ Task Board</h1>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid lg:grid-cols-3 gap-6">
           {(["todo", "doing", "done"] as const).map((colKey) => (
@@ -69,7 +70,7 @@ export default function TasksPage() {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`rounded-xl border p-4 shadow-sm min-h-[300px] flex flex-col ${
+                  className={`rounded-xl border p-4 shadow-sm min-h-[400px] flex flex-col transition ${
                     colKey === "todo"
                       ? "bg-blue-50 border-blue-200"
                       : colKey === "doing"
@@ -77,12 +78,18 @@ export default function TasksPage() {
                       : "bg-green-50 border-green-200"
                   }`}
                 >
-                  <h3 className="font-semibold mb-3 flex justify-between items-center">
-                    {colKey === "todo"
-                      ? "📝 To Do"
-                      : colKey === "doing"
-                      ? "⏳ In Progress"
-                      : "✅ Done"}
+                  {/* Column Header */}
+                  <h3 className="font-semibold mb-3 flex justify-between items-center text-gray-800">
+                    <span className="flex items-center gap-2">
+                      {colKey === "todo"
+                        ? "📝 To Do"
+                        : colKey === "doing"
+                        ? "⏳ In Progress"
+                        : "✅ Done"}
+                      <span className="text-xs bg-gray-200 px-2 py-0.5 rounded-full">
+                        {columns[colKey].length}
+                      </span>
+                    </span>
 
                     {colKey === "todo" && (
                       <button
@@ -94,7 +101,8 @@ export default function TasksPage() {
                     )}
                   </h3>
 
-                  <div className="flex-1 space-y-2">
+                  {/* Task List */}
+                  <div className="flex-1 space-y-3">
                     {columns[colKey].map((task, index) => (
                       <Draggable draggableId={task.id} index={index} key={task.id}>
                         {(provided) => (
@@ -102,29 +110,30 @@ export default function TasksPage() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`relative rounded-lg px-3 py-2 cursor-pointer border ${
-                              STORE_COLORS[task.store] || "bg-white border-gray-200"
+                            className={`relative rounded-lg px-3 py-3 cursor-pointer border shadow-sm hover:shadow-md transition ${
+                              STORE_COLORS[task.store ?? "All Stores"] || "bg-white border-gray-200"
                             }`}
                             onClick={() => setSelectedTask(task)}
                           >
                             {/* Priority badge */}
                             <span
-                              className={`absolute top-1 right-1 text-xs px-2 py-0.5 rounded-full text-white ${
+                              className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full text-white shadow-sm ${
                                 task.priority === "high"
                                   ? "bg-red-500"
                                   : task.priority === "medium"
-                                  ? "bg-yellow-500"
+                                  ? "bg-yellow-400 text-black"
                                   : "bg-green-500"
                               }`}
                             >
                               {task.priority}
                             </span>
 
+                            {/* Task content */}
                             <p className="font-medium text-sm">{task.title}</p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-gray-600 mt-1">
                               {task.store || "No Store"} · {task.assignee || "Unassigned"}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 mt-0.5">
                               {task.dueDate
                                 ? `Due: ${task.dueDate}`
                                 : task.startDate && task.endDate
@@ -138,7 +147,7 @@ export default function TasksPage() {
                                 e.stopPropagation();
                                 deleteTask(task.id);
                               }}
-                              className="absolute bottom-1 right-1 text-xs text-red-600 hover:underline"
+                              className="absolute -bottom-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full shadow hover:bg-red-600"
                             >
                               ✕
                             </button>

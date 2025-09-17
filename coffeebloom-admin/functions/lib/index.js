@@ -33,21 +33,17 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = void 0;
-//functions/src/index.ts
+exports.resetPassword = exports.setUserDisabled = exports.deleteUser = void 0;
+// functions/src/index.ts
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
-// Initialize Firebase Admin SDK once
 admin.initializeApp();
-/**
- * HTTPS Callable Function:
- * Delete a user from Firebase Authentication
- */
+// ✅ Delete user from Firebase Auth
 exports.deleteUser = functions.https.onRequest(async (req, res) => {
     try {
         const { uid } = req.body;
         if (!uid) {
-            res.status(400).send("❌ Missing uid");
+            res.status(400).send({ error: "Missing uid" });
             return;
         }
         await admin.auth().deleteUser(uid);
@@ -55,6 +51,40 @@ exports.deleteUser = functions.https.onRequest(async (req, res) => {
     }
     catch (err) {
         console.error("Error deleting user:", err);
+        res.status(500).send({ error: err.message });
+    }
+});
+// ✅ Disable / Enable user
+exports.setUserDisabled = functions.https.onRequest(async (req, res) => {
+    try {
+        const { uid, disabled } = req.body;
+        if (!uid || disabled === undefined) {
+            res.status(400).send({ error: "Missing uid or disabled flag" });
+            return;
+        }
+        await admin.auth().updateUser(uid, { disabled });
+        res
+            .status(200)
+            .send({ message: `✅ User ${disabled ? "disabled" : "enabled"} successfully` });
+    }
+    catch (err) {
+        console.error("Error updating user status:", err);
+        res.status(500).send({ error: err.message });
+    }
+});
+// ✅ Send password reset link
+exports.resetPassword = functions.https.onRequest(async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            res.status(400).send({ error: "Missing email" });
+            return;
+        }
+        const link = await admin.auth().generatePasswordResetLink(email);
+        res.status(200).send({ message: "✅ Reset link generated", link });
+    }
+    catch (err) {
+        console.error("Error generating reset link:", err);
         res.status(500).send({ error: err.message });
     }
 });

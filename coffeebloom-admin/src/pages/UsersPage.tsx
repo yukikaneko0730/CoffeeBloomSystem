@@ -11,6 +11,7 @@ type User = {
   email: string;
   roles: string[];
   store?: string;
+  disabled?: boolean;
 };
 
 const STORES = ["", "Mitte", "Kreuzberg", "Neukölln"]; // "" = All Stores
@@ -144,7 +145,6 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to reset");
-      // Return link in toast (short message); copy from console for full link.
       console.log("Password reset link:", data.link);
       toast.push("Reset link generated (see console)", "success");
     } catch (e: any) {
@@ -158,7 +158,7 @@ export default function UsersPage() {
       <h1 className="text-2xl font-bold">👥 Manage Users (HQ Only)</h1>
 
       {/* Controls */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-wrap gap-4 items-end mb-6">
         <div className="flex-1 min-w-[220px]">
           <label className="block text-sm font-medium mb-1">Search (Email)</label>
           <input
@@ -168,7 +168,7 @@ export default function UsersPage() {
               setPage(1);
             }}
             placeholder="e.g. alice@coffeebloom.com"
-            className="w-full border px-3 py-2 rounded-md"
+            className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -180,7 +180,7 @@ export default function UsersPage() {
               setRoleFilter(e.target.value);
               setPage(1);
             }}
-            className="border px-3 py-2 rounded-md"
+            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All</option>
             {ROLES.map((r) => (
@@ -199,7 +199,7 @@ export default function UsersPage() {
               setStoreFilter(e.target.value);
               setPage(1);
             }}
-            className="border px-3 py-2 rounded-md"
+            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {STORES.map((s) => (
               <option key={s || "all"} value={s}>
@@ -212,7 +212,7 @@ export default function UsersPage() {
         <div>
           <label className="block text-sm font-medium mb-1">Sort</label>
           <button
-            className="border px-3 py-2 rounded-md"
+            className="border px-3 py-2 rounded-md bg-white hover:bg-gray-100"
             onClick={() => setSortAsc((v) => !v)}
           >
             Email {sortAsc ? "↑" : "↓"}
@@ -221,7 +221,7 @@ export default function UsersPage() {
       </div>
 
       {/* Add new user */}
-      <div className="p-4 border rounded-md bg-gray-50 space-y-3">
+      <div className="p-4 border rounded-md bg-white shadow-sm space-y-3 mb-6">
         <h2 className="text-lg font-semibold">➕ Add New User</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
@@ -229,19 +229,19 @@ export default function UsersPage() {
             placeholder="Email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
-            className="border px-3 py-2 rounded-md"
+            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-            <input
-              type="text"
-              placeholder="Roles (comma separated)"
-              value={newRoles}
-              onChange={(e) => setNewRoles(e.target.value)}
-              className="border px-3 py-2 rounded-md"
-            />
+          <input
+            type="text"
+            placeholder="Roles (comma separated)"
+            value={newRoles}
+            onChange={(e) => setNewRoles(e.target.value)}
+            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           <select
             value={newStore}
             onChange={(e) => setNewStore(e.target.value)}
-            className="border px-3 py-2 rounded-md"
+            className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {STORES.map((s) => (
               <option key={s || "all"} value={s}>
@@ -263,48 +263,54 @@ export default function UsersPage() {
         <p>Loading users...</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-[720px] w-full border-collapse border">
+          <table className="min-w-[720px] w-full border-collapse border rounded-md shadow-sm">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-3 py-2 text-left">Email</th>
-                <th className="border px-3 py-2 text-left">Roles</th>
-                <th className="border px-3 py-2 text-left">Store</th>
-                <th className="border px-3 py-2 text-left">Actions</th>
+              <tr className="bg-gray-100 text-left">
+                <th className="border px-4 py-2">Email</th>
+                <th className="border px-4 py-2">Roles</th>
+                <th className="border px-4 py-2">Store</th>
+                <th className="border px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {paged.map((u) => (
-                <tr key={u.id} className="odd:bg-white even:bg-gray-50">
-                  <td className="border px-3 py-2">{u.email}</td>
-                  <td className="border px-3 py-2">{u.roles?.join(", ") || "—"}</td>
-                  <td className="border px-3 py-2">{u.store || "All Stores"}</td>
-                  <td className="border px-3 py-2 space-x-2">
+                <tr
+                  key={u.id}
+                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
+                >
+                  <td className="border px-4 py-3">{u.email}</td>
+                  <td className="border px-4 py-3">{u.roles?.join(", ") || "—"}</td>
+                  <td className="border px-4 py-3">{u.store || "All Stores"}</td>
+                  <td className="border px-4 py-3 flex flex-wrap gap-2">
                     <button
-                      className="text-blue-600 hover:underline"
+                      className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
                       onClick={() => setSelectedUser(u)}
                     >
                       Edit
                     </button>
                     <button
-                      className="text-red-600 hover:underline"
+                      className="px-2 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
                       onClick={() => handleDelete(u.id)}
                     >
                       Delete
                     </button>
+                    {u.disabled ? (
+                      <button
+                        className="px-2 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+                        onClick={() => handleDisableToggle(u, false)}
+                      >
+                        Enable
+                      </button>
+                    ) : (
+                      <button
+                        className="px-2 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+                        onClick={() => handleDisableToggle(u, true)}
+                      >
+                        Disable
+                      </button>
+                    )}
                     <button
-                      className="text-yellow-700 hover:underline"
-                      onClick={() => handleDisableToggle(u, true)}
-                    >
-                      Disable
-                    </button>
-                    <button
-                      className="text-green-700 hover:underline"
-                      onClick={() => handleDisableToggle(u, false)}
-                    >
-                      Enable
-                    </button>
-                    <button
-                      className="text-purple-700 hover:underline"
+                      className="px-2 py-1 text-sm bg-purple-500 text-white rounded hover:bg-purple-600"
                       onClick={() => handleSendReset(u.email)}
                     >
                       Reset PW
@@ -314,7 +320,10 @@ export default function UsersPage() {
               ))}
               {paged.length === 0 && (
                 <tr>
-                  <td className="border px-3 py-6 text-center text-gray-500" colSpan={4}>
+                  <td
+                    className="border px-3 py-6 text-center text-gray-500"
+                    colSpan={4}
+                  >
                     No results
                   </td>
                 </tr>
