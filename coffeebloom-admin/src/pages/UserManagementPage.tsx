@@ -1,112 +1,160 @@
 // src/pages/UserManagementPage.tsx
-import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { auth, db } from "../lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import { db } from "../lib/firebase";
+
+type UserData = {
+  id: string;
+  email: string;
+  roles: string[];
+  store?: string;
+  createdAt?: string;
+};
 
 export default function UserManagementPage() {
-  const { profile } = useAuth();
-
+  const [users, setUsers] = useState<UserData[]>([]);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("employee");
+  const [role, setRole] = useState("store");
   const [store, setStore] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Only HQ can access
-  if (!profile?.roles.includes("honbu")) {
-    return <p className="text-red-600 p-4">❌ Access denied. HQ only.</p>;
-  }
+  const fetchUsers = async () => {
+    const snap = await getDocs(collection(db, "users"));
+    setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() } as UserData)));
+  };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleAddUser = async () => {
+    if (!email) {
+      setMessage("❌ Please enter an email.");
+      return;
+    }
     setLoading(true);
     setMessage("");
 
     try {
-      // 1. Create account in Firebase Auth
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-      // 2. Save profile in Firestore
-      await setDoc(doc(db, "users", cred.user.uid), {
+      const newUserRef = doc(collection(db, "users")); // generate doc ID
+      await setDoc(newUserRef, {
         email,
-        role,
-        store,
+        roles: [role],
+        store: store || null,
         createdAt: new Date().toISOString(),
       });
 
-      setMessage("✅ User created successfully!");
+      setMessage("✅ User added successfully!");
       setEmail("");
-      setPassword("");
-      setRole("employee");
+      setRole("store");
       setStore("");
+      fetchUsers();
     } catch (err: any) {
-      console.error("Create user error:", err);
-      setMessage("❌ " + (err.message || "Failed to create user"));
+      console.error("Error adding user:", err);
+      setMessage("❌ Failed to add user: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDeleteUser = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+
+    try {
+      await deleteDoc(doc(db, "users", id));
+      setMessage("✅ User deleted successfully!");
+      fetchUsers();
+    } catch (err: any) {
+      console.error("Error deleting user:", err);
+      setMessage("❌ Failed to delete user: " + err.message);
+    }
+  };
+
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-4">👥 User Management</h2>
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-4">👥 User Management</h1>
+
       {message && (
         <p
-          className={`mb-3 text-sm ${
+          className={`mb-4 ${
             message.startsWith("✅") ? "text-green-600" : "text-red-600"
           }`}
         >
           {message}
         </p>
       )}
-      <form onSubmit={handleCreateUser} className="space-y-4">
+
+      {/* Add User Form */}
+      <div className="flex flex-wrap gap-2 mb-6">
         <input
           type="email"
-          placeholder="User Email"
-          className="w-full border px-3 py-2 rounded-md"
+          placeholder="Email"
+          className="border px-3 py-2 rounded flex-1 min-w-[180px]"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
-
-        <input
-          type="password"
-          placeholder="Password (min 6 chars)"
-          className="w-full border px-3 py-2 rounded-md"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
         <select
-          className="w-full border px-3 py-2 rounded-md"
+          className="border px-3 py-2 rounded"
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          <option value="employee">Employee</option>
-          <option value="manager">Store Manager</option>
-          <option value="honbu">HQ</option>
+          <option value="honbu">HQ (Honbu)</option>
+          <option value="store">Store</option>
+          <option value="manager">Manager</option>
         </select>
-
         <input
           type="text"
           placeholder="Store (optional)"
-          className="w-full border px-3 py-2 rounded-md"
+          className="border px-3 py-2 rounded"
           value={store}
           onChange={(e) => setStore(e.target.value)}
         />
-
         <button
-          type="submit"
+          onClick={handleAddUser}
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {loading ? "Creating..." : "Create User"}
+          {loading ? "Adding..." : "Add"}
         </button>
-      </form>
+      </div>
+
+      {/* Users Table */}
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-100 border-b">
+            <th className="px-3 py-2 text-left">Email</th>
+            <th className="px-3 py-2 text-left">Roles</th>
+            <th className="px-3 py-2 text-left">Store</th>
+            <th className="px-3 py-2 text-left">Created At</th>
+            <th className="px-3 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((u) => (
+            <tr key={u.id} className="border-b">
+              <td className="px-3 py-2">{u.email}</td>
+              <td className="px-3 py-2">{u.roles?.join(", ")}</td>
+              <td className="px-3 py-2">{u.store || "-"}</td>
+              <td className="px-3 py-2">{u.createdAt?.slice(0, 10) || "-"}</td>
+              <td className="px-3 py-2">
+                <button
+                  onClick={() => handleDeleteUser(u.id)}
+                  className="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

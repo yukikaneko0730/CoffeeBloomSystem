@@ -1,13 +1,7 @@
 // src/lib/firebase.ts
 import { initializeApp } from "firebase/app";
-import {
-  getAuth,
-  connectAuthEmulator,
-} from "firebase/auth";
-import {
-  getFirestore,
-  connectFirestoreEmulator,
-} from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvzuEsftw9qcdloDhNOJH9-yIi9eiEHGg",
@@ -20,6 +14,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 

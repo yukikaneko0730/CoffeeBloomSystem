@@ -23,7 +23,7 @@ export default function Layout() {
       <header className="bg-gray-800 text-white px-6 py-3 flex justify-between items-center">
         <h1 className="font-bold text-lg">CoffeeBloom Admin</h1>
         <div className="flex items-center gap-4">
-          <span>{profile?.username || "Guest"}</span>
+          <span>{profile?.username || profile?.email || "Guest"}</span>
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-md"
@@ -43,33 +43,77 @@ export default function Layout() {
           <Link to="/tasks" className="block px-3 py-2 rounded hover:bg-gray-200">
             ✅ Tasks
           </Link>
-          <Link
-            to="/settings"
-            className="block px-3 py-2 rounded hover:bg-gray-200"
-          >
+
+          {/* 📅 Shifts */}
+          {(profile?.roles?.includes("store-admin") ||
+            profile?.roles?.includes("manager") ||
+            profile?.roles?.includes("employee") ||
+            profile?.roles?.includes("honbu")) && (
+            <Link
+              to="/shifts"
+              className="block px-3 py-2 rounded hover:bg-gray-200 text-indigo-700 font-semibold"
+            >
+              📅 Shifts
+            </Link>
+          )}
+
+          {/* 👥 Employees */}
+          {(profile?.roles?.includes("store-admin") ||
+            profile?.roles?.includes("manager") ||
+            profile?.roles?.includes("honbu")) && (
+            <Link
+              to="/employees"
+              className="block px-3 py-2 rounded hover:bg-gray-200 text-pink-700 font-semibold"
+            >
+              👥 Employees
+            </Link>
+          )}
+
+          <Link to="/settings" className="block px-3 py-2 rounded hover:bg-gray-200">
             ⚙️ Settings
-          </Link>
-          <Link
-            to="/reports"
-            className="block px-3 py-2 rounded hover:bg-gray-200"
-          >
-            📊 Reports
           </Link>
 
           {/* HQ only */}
           {profile?.roles?.includes("honbu") && (
-            <Link
-              to="/users"
-              className="block px-3 py-2 rounded hover:bg-gray-200 text-blue-700 font-semibold"
-            >
-              👥 User Management
-            </Link>
+            <>
+              <Link
+                to="/reports"
+                className="block px-3 py-2 rounded hover:bg-gray-200"
+              >
+                📊 HQ Reports
+              </Link>
+              <Link
+                to="/users"
+                className="block px-3 py-2 rounded hover:bg-gray-200 text-blue-700 font-semibold"
+              >
+                👥 User Management
+              </Link>
+            </>
+          )}
+
+          {/* Store & Manager */}
+          {(profile?.roles?.includes("store-admin") ||
+            profile?.roles?.includes("manager")) && (
+            <>
+              <Link
+                to="/store-reports"
+                className="block px-3 py-2 rounded hover:bg-gray-200 text-green-700 font-semibold"
+              >
+                📝 Submit Report
+              </Link>
+              <Link
+                to="/my-reports"
+                className="block px-3 py-2 rounded hover:bg-gray-200 text-purple-700 font-semibold"
+              >
+                📒 My Reports
+              </Link>
+            </>
           )}
         </nav>
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          <Outlet /> 
+          <Outlet />
         </main>
       </div>
     </div>
